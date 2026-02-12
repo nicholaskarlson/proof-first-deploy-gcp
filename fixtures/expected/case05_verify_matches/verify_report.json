@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "name": "service_name",
+      "ok": true
+    },
+    {
+      "name": "region",
+      "ok": true
+    },
+    {
+      "name": "image_digest",
+      "ok": true
+    }
+  ]
+}

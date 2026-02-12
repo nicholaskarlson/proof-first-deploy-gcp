@@ -1,0 +1,17 @@
+{
+  "project_id": "pf-demo",
+  "region": "us-central1",
+  "service_name": "pf-drop",
+  "image_digest": "ghcr.io/example/finance-pipeline-gcp@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "runtime": {},
+  "env": [
+    {
+      "key": "INPUT_BUCKET",
+      "value": "pf-drop-in"
+    },
+    {
+      "key": "OUTPUT_BUCKET",
+      "value": "pf-drop-out"
+    }
+  ]
+}

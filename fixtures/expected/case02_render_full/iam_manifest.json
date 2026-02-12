@@ -1,0 +1,7 @@
+{
+  "service_account": "pf-drop-sa@pf-demo.iam.gserviceaccount.com",
+  "roles": [
+    "roles/eventarc.eventReceiver",
+    "roles/run.invoker"
+  ]
+}

@@ -1,0 +1,25 @@
+project_id: pf-demo
+region: us-central1
+service_name: pf-drop
+image_digest: ghcr.io/example/finance-pipeline-gcp@sha256:1111111111111111111111111111111111111111111111111111111111111111
+cpu: "1"
+memory: 512Mi
+concurrency: 80
+timeout_seconds: 60
+max_instances: 2
+env:
+  INPUT_BUCKET: pf-drop-in
+  LOG_LEVEL: info
+  OUTPUT_BUCKET: pf-drop-out
+eventarc:
+  trigger_name: pf-drop-trigger
+  bucket: pf-drop-in
+  input_prefix: in/
+  ce_type_allowlist:
+    - google.cloud.storage.object.v1.finalized
+    - google.cloud.storage.object.v1.metadataUpdated
+iam:
+  service_account: pf-drop-sa@pf-demo.iam.gserviceaccount.com
+  roles:
+    - roles/eventarc.eventReceiver
+    - roles/run.invoker

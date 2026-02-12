@@ -1,0 +1,9 @@
+{
+  "trigger_name": "pf-drop-trigger",
+  "bucket": "pf-drop-in",
+  "input_prefix": "in/",
+  "ce_type_allowlist": [
+    "google.cloud.storage.object.v1.finalized",
+    "google.cloud.storage.object.v1.metadataUpdated"
+  ]
+}
