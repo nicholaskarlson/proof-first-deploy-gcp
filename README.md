@@ -37,12 +37,19 @@ On failure, emits **only**:
 
 - `error.txt`
 
-> Note: `--out` is cleared before writing, so reruns don’t leave stale files behind.
+> Note: `--out` is cleared before writing (and refused if unsafe: `.`, `..`, `/`, or a Windows volume root), so reruns don’t leave stale files behind.
 
 ### Verify (compare config to a snapshot)
 
 ```bash
 go run ./cmd/pfdeploy verify --config ./config.yaml --snapshot ./snapshot --out ./out/verify
+```
+
+To capture a snapshot with `gcloud` (optional, requires access to the target project):
+
+```bash
+mkdir -p ./snapshot
+gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" --format=json > ./snapshot/gcloud_service.json
 ```
 
 A snapshot is a small, “captured” JSON file (fixture-friendly) representing what’s deployed.

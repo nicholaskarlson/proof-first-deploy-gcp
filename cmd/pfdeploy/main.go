@@ -39,14 +39,16 @@ func cmdRender(args []string) int {
 		return 2
 	}
 
+	if err := ResetOutDir(*outDir); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
+
 	cfg, err := LoadConfig(*cfgPath)
 	if err != nil {
-		_ = ResetOutDir(*outDir)
 		_ = WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n")
 		return 0
 	}
-
-	_ = ResetOutDir(*outDir)
 
 	arts, err := Render(cfg)
 	if err != nil {
@@ -70,73 +72,141 @@ func cmdVerify(args []string) int {
 		return 2
 	}
 
+	if err := ResetOutDir(*outDir); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
+
 	cfg, err := LoadConfig(*cfgPath)
 	if err != nil {
-		_ = ResetOutDir(*outDir)
 		_ = WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n")
 		return 0
 	}
-
-	_ = ResetOutDir(*outDir)
 
 	rep, err := Verify(cfg, *snapDir)
 	if err != nil {
 		_ = WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n")
 		return 0
 	}
-
 	b, _ := json.MarshalIndent(rep, "", "  ")
-	_ = WriteText(filepath.Join(*outDir, "verify_report.json"), string(b)+"\n")
+	if err := WriteText(filepath.Join(*outDir, "verify_report.json"), string(b)+"\n"); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 	return 0
 }
 
 func cmdDemo(args []string) int {
 	fs := flag.NewFlagSet("demo", flag.ContinueOnError)
-	outBase := fs.String("out", "", "out dir")
+	outBase := fs.String("out", "./out", "output base dir")
 	_ = fs.Parse(args)
-	if *outBase == "" {
+
+	if err := ResetOutDir(*outBase); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
-	_ = ResetOutDir(*outBase)
 
-	cases, err := ListCases("fixtures/input")
+	cases, err := ListCases("./fixtures/input")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
 	for _, c := range cases {
-		inDir := filepath.Join("fixtures/input", c)
-		expDir := filepath.Join("fixtures/expected", c)
+		inDir := filepath.Join("./fixtures/input", c)
+		expDir := filepath.Join("./fixtures/expected", c)
 		outDir := filepath.Join(*outBase, c)
-		_ = ResetOutDir(outDir)
 
-		cfg, err := LoadConfig(filepath.Join(inDir, "config.yaml"))
-		if err != nil {
-			_ = WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n")
-		} else if FileExists(filepath.Join(inDir, "gcloud_service.json")) {
-			rep, err := Verify(cfg, inDir)
-			if err != nil {
+		if err := ResetOutDir(outDir); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 2
+		}
+
+		cfgPath := filepath.Join(inDir, "config.yaml")
+		expErr := filepath.Join(expDir, "error.txt")
+
+		// Expected-fail: must produce only error.txt.
+		if FileExists(expErr) {
+			// Two modes: verify (if snapshot file exists), else render.
+			snapPath := filepath.Join(inDir, "gcloud_service.json")
+			if FileExists(snapPath) {
+				cfg, err := LoadConfig(cfgPath)
+				if err == nil {
+					rep, verr := Verify(cfg, inDir)
+					if verr == nil {
+						b, _ := json.MarshalIndent(rep, "", "  ")
+						_ = WriteText(filepath.Join(outDir, "verify_report.json"), string(b)+"\n")
+						err = nil
+					} else {
+						err = verr
+					}
+				}
+				if err == nil {
+					fmt.Printf("demo mismatch %s: expected error, got none\n", c)
+					return 1
+				}
 				_ = WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n")
 			} else {
-				b, _ := json.MarshalIndent(rep, "", "  ")
-				_ = WriteText(filepath.Join(outDir, "verify_report.json"), string(b)+"\n")
+				cfg, err := LoadConfig(cfgPath)
+				if err == nil {
+					arts, rerr := Render(cfg)
+					if rerr == nil {
+						_ = WriteArtifacts(outDir, arts)
+						err = nil
+					} else {
+						err = rerr
+					}
+				}
+				if err == nil {
+					fmt.Printf("demo mismatch %s: expected error, got none\n", c)
+					return 1
+				}
+				_ = WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n")
+			}
+
+			if err := DiffTrees(outDir, expDir); err != nil {
+				fmt.Println(err.Error())
+				return 1
+			}
+			continue
+		}
+
+		cfg, err := LoadConfig(cfgPath)
+		if err != nil {
+			fmt.Printf("demo mismatch %s: %v\n", c, err)
+			return 1
+		}
+
+		// Two modes: verify (if snapshot file exists), else render.
+		snapPath := filepath.Join(inDir, "gcloud_service.json")
+		if FileExists(snapPath) {
+			rep, err := Verify(cfg, inDir)
+			if err != nil {
+				fmt.Printf("demo mismatch %s: %v\n", c, err)
+				return 1
+			}
+			b, _ := json.MarshalIndent(rep, "", "  ")
+			if err := WriteText(filepath.Join(outDir, "verify_report.json"), string(b)+"\n"); err != nil {
+				fmt.Printf("demo mismatch %s: %v\n", c, err)
+				return 1
 			}
 		} else {
 			arts, err := Render(cfg)
 			if err != nil {
-				_ = WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n")
-			} else {
-				_ = WriteArtifacts(outDir, arts)
+				fmt.Printf("demo mismatch %s: %v\n", c, err)
+				return 1
+			}
+			if err := WriteArtifacts(outDir, arts); err != nil {
+				fmt.Printf("demo mismatch %s: %v\n", c, err)
+				return 1
 			}
 		}
 
-		if err := DiffTrees(expDir, outDir); err != nil {
-			fmt.Fprintf(os.Stderr, "demo mismatch %s: %v\n", c, err)
+		if err := DiffTrees(outDir, expDir); err != nil {
+			fmt.Println(err.Error())
 			return 1
 		}
 	}
-
 	fmt.Println("OK")
 	return 0
 }
