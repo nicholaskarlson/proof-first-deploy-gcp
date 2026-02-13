@@ -34,7 +34,9 @@ func cmdRender(args []string) int {
 	fs := flag.NewFlagSet("render", flag.ContinueOnError)
 	cfgPath := fs.String("config", "", "config.yaml")
 	outDir := fs.String("out", "", "out dir")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 	if *cfgPath == "" || *outDir == "" {
 		return 2
 	}
@@ -46,13 +48,19 @@ func cmdRender(args []string) int {
 
 	cfg, err := LoadConfig(*cfgPath)
 	if err != nil {
-		_ = WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n")
+		if werr := WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n"); werr != nil {
+			fmt.Fprintln(os.Stderr, werr)
+			return 1
+		}
 		return 0
 	}
 
 	arts, err := Render(cfg)
 	if err != nil {
-		_ = WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n")
+		if werr := WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n"); werr != nil {
+			fmt.Fprintln(os.Stderr, werr)
+			return 1
+		}
 		return 0
 	}
 	if err := WriteArtifacts(*outDir, arts); err != nil {
@@ -67,7 +75,9 @@ func cmdVerify(args []string) int {
 	cfgPath := fs.String("config", "", "config.yaml")
 	snapDir := fs.String("snapshot", "", "snapshot dir")
 	outDir := fs.String("out", "", "out dir")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 	if *cfgPath == "" || *snapDir == "" || *outDir == "" {
 		return 2
 	}
@@ -79,16 +89,26 @@ func cmdVerify(args []string) int {
 
 	cfg, err := LoadConfig(*cfgPath)
 	if err != nil {
-		_ = WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n")
+		if werr := WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n"); werr != nil {
+			fmt.Fprintln(os.Stderr, werr)
+			return 1
+		}
 		return 0
 	}
 
 	rep, err := Verify(cfg, *snapDir)
 	if err != nil {
-		_ = WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n")
+		if werr := WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n"); werr != nil {
+			fmt.Fprintln(os.Stderr, werr)
+			return 1
+		}
 		return 0
 	}
-	b, _ := json.MarshalIndent(rep, "", "  ")
+	b, merr := json.MarshalIndent(rep, "", "  ")
+	if merr != nil {
+		fmt.Fprintln(os.Stderr, merr)
+		return 1
+	}
 	if err := WriteText(filepath.Join(*outDir, "verify_report.json"), string(b)+"\n"); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -99,7 +119,9 @@ func cmdVerify(args []string) int {
 func cmdDemo(args []string) int {
 	fs := flag.NewFlagSet("demo", flag.ContinueOnError)
 	outBase := fs.String("out", "./out", "output base dir")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	if err := ResetOutDir(*outBase); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -134,8 +156,15 @@ func cmdDemo(args []string) int {
 				if err == nil {
 					rep, verr := Verify(cfg, inDir)
 					if verr == nil {
-						b, _ := json.MarshalIndent(rep, "", "  ")
-						_ = WriteText(filepath.Join(outDir, "verify_report.json"), string(b)+"\n")
+						b, merr := json.MarshalIndent(rep, "", "  ")
+						if merr != nil {
+							fmt.Printf("demo mismatch %s: %v\n", c, merr)
+							return 1
+						}
+						if werr := WriteText(filepath.Join(outDir, "verify_report.json"), string(b)+"\n"); werr != nil {
+							fmt.Printf("demo mismatch %s: %v\n", c, werr)
+							return 1
+						}
 						err = nil
 					} else {
 						err = verr
@@ -145,13 +174,19 @@ func cmdDemo(args []string) int {
 					fmt.Printf("demo mismatch %s: expected error, got none\n", c)
 					return 1
 				}
-				_ = WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n")
+				if werr := WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n"); werr != nil {
+					fmt.Printf("demo mismatch %s: %v\n", c, werr)
+					return 1
+				}
 			} else {
 				cfg, err := LoadConfig(cfgPath)
 				if err == nil {
 					arts, rerr := Render(cfg)
 					if rerr == nil {
-						_ = WriteArtifacts(outDir, arts)
+						if werr := WriteArtifacts(outDir, arts); werr != nil {
+							fmt.Printf("demo mismatch %s: %v\n", c, werr)
+							return 1
+						}
 						err = nil
 					} else {
 						err = rerr
@@ -161,7 +196,10 @@ func cmdDemo(args []string) int {
 					fmt.Printf("demo mismatch %s: expected error, got none\n", c)
 					return 1
 				}
-				_ = WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n")
+				if werr := WriteText(filepath.Join(outDir, "error.txt"), err.Error()+"\n"); werr != nil {
+					fmt.Printf("demo mismatch %s: %v\n", c, werr)
+					return 1
+				}
 			}
 
 			if err := DiffTrees(outDir, expDir); err != nil {
@@ -185,7 +223,11 @@ func cmdDemo(args []string) int {
 				fmt.Printf("demo mismatch %s: %v\n", c, err)
 				return 1
 			}
-			b, _ := json.MarshalIndent(rep, "", "  ")
+			b, merr := json.MarshalIndent(rep, "", "  ")
+			if merr != nil {
+				fmt.Printf("demo mismatch %s: %v\n", c, merr)
+				return 1
+			}
 			if err := WriteText(filepath.Join(outDir, "verify_report.json"), string(b)+"\n"); err != nil {
 				fmt.Printf("demo mismatch %s: %v\n", c, err)
 				return 1
