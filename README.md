@@ -2,6 +2,12 @@
 
 **Repo B (Book 2): deterministic deploy evidence** — render a small, diffable set of deployment manifests from a config file, and verify a real-world snapshot against that config.
 
+![ci](https://github.com/nicholaskarlson/proof-first-deploy-gcp/actions/workflows/ci.yml/badge.svg)
+![license](https://img.shields.io/badge/license-MIT-blue.svg)
+
+> **Book:** *Proof-First Pipelines in the Cloud* (Book 2)  
+> This repo is **Repo B (Repo 3 of 4)**. The exact code referenced in the manuscript is tagged **[`book2-v1`](https://github.com/nicholaskarlson/proof-first-deploy-gcp/tree/book2-v1)**.
+
 This repo is intentionally **not** a cloud-cert guide and it does **not** run `gcloud` for you. Instead it focuses on the “proof-first” layer:
 
 - outputs are deterministic (stable ordering + stable formatting)
@@ -14,10 +20,10 @@ This repo is intentionally **not** a cloud-cert guide and it does **not** run `g
 
 This repo is designed to be used alongside the other Book 2 repos:
 
-- Anchor: `finance-pipeline-gcp` — deployable drop-folder workflow (trigger → run → artifacts → markers)
-- Repo A: `proof-first-event-contracts` — event parsing contract + fixtures/goldens + expected-fail
-- Repo B: `proof-first-deploy-gcp` — deterministic deploy evidence (render + verify) + fixtures/goldens
-- Repo C: `proof-first-casefiles` — engagement kits you can hand to a client (or use in teaching)
+- **[finance-pipeline-gcp](https://github.com/nicholaskarlson/finance-pipeline-gcp)** — anchor drop-folder workflow (trigger → run → artifacts → markers)
+- **[proof-first-event-contracts](https://github.com/nicholaskarlson/proof-first-event-contracts)** — event parsing contract + fixtures/goldens + expected-fail
+- **[proof-first-deploy-gcp](https://github.com/nicholaskarlson/proof-first-deploy-gcp)** — deterministic deploy evidence (render + verify) + fixtures/goldens
+- **[proof-first-casefiles](https://github.com/nicholaskarlson/proof-first-casefiles)** — engagement kits you can hand to a client (or use in teaching)
 
 ## Quickstart
 
