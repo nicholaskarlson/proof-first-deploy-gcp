@@ -8,13 +8,30 @@ This repo is intentionally **not** a cloud-cert guide and it does **not** run `g
 - artifacts are small, reviewable, and hashable
 - expected-fail cases emit only `error.txt` (also deterministic)
 
+**Go baseline:** 1.22.x (CI witnesses ubuntu/macos/windows on 1.22.x, plus ubuntu “stable”).
+
+## Book 2 suite map
+
+This repo is designed to be used alongside the other Book 2 repos:
+
+- Anchor: `finance-pipeline-gcp` — deployable drop-folder workflow (trigger → run → artifacts → markers)
+- Repo A: `proof-first-event-contracts` — event parsing contract + fixtures/goldens + expected-fail
+- Repo B: `proof-first-deploy-gcp` — deterministic deploy evidence (render + verify) + fixtures/goldens
+- Repo C: `proof-first-casefiles` — engagement kits you can hand to a client (or use in teaching)
+
 ## Quickstart
+
+Run the proof gate:
 
 ```bash
 make verify
-go test -count=1 ./...
+# (optional) Equivalent, if you want to run it directly:
+# go test -count=1 ./...
+```
 
-# proof gate demo (recomputes outputs + byte-compares to fixtures/expected)
+Run the deterministic fixture demo (recomputes outputs and diffs against `fixtures/expected/**`):
+
+```bash
 go run ./cmd/pfdeploy demo --out ./out
 ```
 
@@ -99,17 +116,6 @@ Expected outputs:
 - `fixtures/expected/<case>/` containing either:
   - the artifact set, or
   - `error.txt` only (expected-fail)
-
-## Where this fits (Book 2)
-
-Book 2 is a 4-repo suite:
-
-- **Anchor:** `finance-pipeline-gcp` — drop-folder pipeline (Eventarc → Cloud Run) with deterministic artifacts + replay safety
-- **Repo A:** `proof-first-event-contracts` — event parsing/decision contract with fixtures/goldens + expected-fail
-- **Repo B (this repo):** `proof-first-deploy-gcp` — deterministic deploy evidence (render + verify)
-- **Repo C:** `proof-first-casefiles` — realistic “engagement kits” (inputs + expected outputs + handoff)
-
-The intent: readers learn how to build **workflow-grade guarantees**, not just deterministic tools.
 
 ## Go + CI witness
 

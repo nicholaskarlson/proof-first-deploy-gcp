@@ -13,5 +13,6 @@ demo:
 	mkdir -p ./out
 	go run ./cmd/pfdeploy demo --out ./out
 
-verify: fmt test demo
+# Proof gate: non-mutating (does not run gofmt -w).
+verify: test demo
 	@echo OK
