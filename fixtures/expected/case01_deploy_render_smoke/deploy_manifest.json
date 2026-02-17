@@ -1,0 +1,17 @@
+{
+  "project_id": "pf-book4",
+  "region": "us-central1",
+  "service_name": "pf-drop-book4",
+  "image_digest": "ghcr.io/example/finance-pipeline-gcp@sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "runtime": {},
+  "env": [
+    {
+      "key": "INPUT_BUCKET",
+      "value": "pf-book4-in"
+    },
+    {
+      "key": "OUTPUT_BUCKET",
+      "value": "pf-book4-out"
+    }
+  ]
+}
