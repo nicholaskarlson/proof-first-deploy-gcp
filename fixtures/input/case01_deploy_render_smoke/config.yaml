@@ -1,0 +1,17 @@
+project_id: pf-book4
+region: us-central1
+service_name: pf-drop-book4
+image_digest: ghcr.io/example/finance-pipeline-gcp@sha256:1111111111111111111111111111111111111111111111111111111111111111
+env:
+  INPUT_BUCKET: pf-book4-in
+  OUTPUT_BUCKET: pf-book4-out
+eventarc:
+  trigger_name: pf-drop-trigger-book4
+  bucket: pf-book4-in
+  input_prefix: in/
+  ce_type_allowlist:
+    - google.cloud.storage.object.v1.finalized
+    - google.cloud.storage.object.v1.deleted
+iam:
+  roles:
+    - roles/run.invoker

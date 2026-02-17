@@ -112,6 +112,8 @@ See:
 
 Each case is a folder name (the book references only these names).
 
+Book 4 adds locked fixture cases for Chapters 4–6; Chapter 4 uses: `case01_deploy_render_smoke`.
+
 Inputs:
 
 - `fixtures/input/<case>/config.yaml`
