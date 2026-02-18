@@ -112,7 +112,7 @@ See:
 
 Each case is a folder name (the book references only these names).
 
-Book 4 adds locked fixture cases for Chapters 4–6; Chapter 4 uses: `case01_deploy_render_smoke`; Chapter 5 uses: `case02_snapshot_smoke`.
+Book 4 adds locked fixture cases for Chapters 4–6; Chapter 4 uses: `case01_deploy_render_smoke`; Chapter 5 uses: `case02_snapshot_smoke`; Chapter 6 uses: `case03_verify_matches` and `case04_verify_mismatch_expected_fail`.
 
 Inputs:
 
