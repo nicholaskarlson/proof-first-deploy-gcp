@@ -112,11 +112,12 @@ See:
 
 Each case is a folder name (the book references only these names).
 
-Book 4 adds locked fixture cases for Chapters 4–6; Chapter 4 uses: `case01_deploy_render_smoke`.
+Book 4 adds locked fixture cases for Chapters 4–6; Chapter 4 uses: `case01_deploy_render_smoke`; Chapter 5 uses: `case02_snapshot_smoke`.
 
 Inputs:
 
 - `fixtures/input/<case>/config.yaml`
+- optional: `fixtures/input/<case>/gcloud_service_raw.json` (if present, the case is a **snapshot** case)
 - optional: `fixtures/input/<case>/gcloud_service.json` (if present, the case is a **verify** case)
 
 Expected outputs:
