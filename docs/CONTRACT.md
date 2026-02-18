@@ -135,3 +135,15 @@ Heuristic used by the demo runner:
 - otherwise → run **render**
 
 Expected-fail cases are represented by an expected tree that contains **only** `error.txt`.
+
+
+## Snapshot
+
+`pfdeploy snapshot` normalizes a captured service snapshot into a tiny, diffable receipt.
+
+Input (in a case folder):
+- `gcloud_service_raw.json` (JSON object with: `service_name`, `region`, `image_digest`)
+
+Outputs:
+- `gcloud_service.json` (canonical JSON, trailing newline)
+- `manifest.sha256` (sha256sum line for `gcloud_service.json`)

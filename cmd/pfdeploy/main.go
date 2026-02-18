@@ -9,7 +9,7 @@ import (
 )
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "pfdeploy demo|render|verify ...")
+	fmt.Fprintln(os.Stderr, "pfdeploy demo|render|snapshot|verify ...")
 }
 
 func main() {
@@ -22,6 +22,8 @@ func main() {
 		os.Exit(cmdDemo(os.Args[2:]))
 	case "render":
 		os.Exit(cmdRender(os.Args[2:]))
+	case "snapshot":
+		os.Exit(cmdSnapshot(os.Args[2:]))
 	case "verify":
 		os.Exit(cmdVerify(os.Args[2:]))
 	default:
@@ -64,6 +66,37 @@ func cmdRender(args []string) int {
 		return 0
 	}
 	if err := WriteArtifacts(*outDir, arts); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return 0
+}
+
+func cmdSnapshot(args []string) int {
+	fs := flag.NewFlagSet("snapshot", flag.ContinueOnError)
+	inDir := fs.String("in", "", "input dir (contains gcloud_service_raw.json)")
+	outDir := fs.String("out", "", "out dir")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if *inDir == "" || *outDir == "" {
+		return 2
+	}
+
+	if err := ResetOutDir(*outDir); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
+
+	s, err := Snapshot(*inDir)
+	if err != nil {
+		if werr := WriteText(filepath.Join(*outDir, "error.txt"), err.Error()+"\n"); werr != nil {
+			fmt.Fprintln(os.Stderr, werr)
+			return 1
+		}
+		return 0
+	}
+	if err := WriteSnapshot(*outDir, s); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
@@ -146,6 +179,25 @@ func cmdDemo(args []string) int {
 
 		cfgPath := filepath.Join(inDir, "config.yaml")
 		expErr := filepath.Join(expDir, "error.txt")
+
+		// Snapshot case: normalize raw snapshot into gcloud_service.json + manifest.sha256.
+		rawSnapPath := filepath.Join(inDir, "gcloud_service_raw.json")
+		if FileExists(rawSnapPath) {
+			s, err := Snapshot(inDir)
+			if err != nil {
+				fmt.Printf("demo mismatch %s: %v\\n", c, err)
+				return 1
+			}
+			if err := WriteSnapshot(outDir, s); err != nil {
+				fmt.Printf("demo mismatch %s: %v\\n", c, err)
+				return 1
+			}
+			if err := DiffTrees(outDir, expDir); err != nil {
+				fmt.Println(err.Error())
+				return 1
+			}
+			continue
+		}
 
 		// Expected-fail: must produce only error.txt.
 		if FileExists(expErr) {
