@@ -1,0 +1,5 @@
+{
+  "service_name": "pf-drop",
+  "region": "us-central1",
+  "image_digest": "ghcr.io/example/finance-pipeline-gcp@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+}
